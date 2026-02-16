@@ -1,0 +1,613 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>LIFE SIGNAL</title>
+
+    <!--LINKS DE RECURSOS-->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles/toggle.css" />
+
+    <!--SCRIPT PARA ESTILOS-->
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#135bec",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
+            },
+            fontFamily: {
+              display: ["Inter"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <!--TERMINA SCRIPT PARA ESTILOS-->
+
+    <!-- Estilos para animaciones de notificaciones -->
+    <style>
+      @keyframes slide-in {
+        from {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      
+      @keyframes slide-out {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(400px);
+          opacity: 0;
+        }
+      }
+      
+      .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+      }
+    </style>
+
+  </head>
+  <body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex"
+  >
+  <!--SCRIPTS-->
+  <script src="scripts/modal.js"></script>
+  <script src="scripts/dayToggle.js"></script>
+  <script type="module" src="scripts/contentTable.js"></script>
+  <script src="scripts/viewRouter.js"></script>
+  <script>
+    // Toggle sidebar en móviles
+    document.addEventListener('DOMContentLoaded', function() {
+      const menuBtn = document.getElementById('mobile-menu-btn');
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      
+      if (menuBtn && sidebar && overlay) {
+        menuBtn.addEventListener('click', () => {
+          sidebar.classList.toggle('-translate-x-full');
+          overlay.classList.toggle('hidden');
+        });
+        
+        overlay.addEventListener('click', () => {
+          sidebar.classList.add('-translate-x-full');
+          overlay.classList.add('hidden');
+        });
+      }
+    });
+  </script>
+  <!--TERMINAN LOS SCRIPTS-->
+
+    <!-- Sidebar Overlay para móviles -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden"></div>
+
+    <!-- Sidebar -->
+    <aside
+      id="sidebar"
+      class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed h-full transition-all duration-300 z-50 -translate-x-full lg:translate-x-0"
+    >
+      <div class="p-6 flex items-center gap-3">
+        <div
+          class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white"
+        >
+          <span class="material-icons-outlined text-xl">alarm</span>
+        </div>
+        <span class="font-bold text-lg tracking-tight">
+          Life Signal
+        </span>
+      </div>
+      <nav class="flex-1 px-4 space-y-1">
+        <a
+          class="flex items-center gap-3 px-3 py-2 text-primary bg-primary/10 rounded-lg font-medium group"
+          href="#"
+          data-view-target="alarms"
+        >
+          <span class="material-icons-outlined">dashboard</span>
+          Agregar Alarma
+        </a>
+        <a
+          class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors group"
+          href="#"
+          data-view-target="registros"
+        >
+          <span class="material-icons-outlined">history</span>
+          Registros
+        </a>
+
+      </nav>
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-3 px-3 py-2">
+          <img
+            alt="Admin Profile"
+            class="w-8 h-8 rounded-full bg-slate-200"
+            data-alt="Professional user profile avatar photo"
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/330px-FullMoon2010.jpg"
+          />
+          <div class="flex flex-col">
+            <span class="text-sm font-medium">Sistemas</span>
+            <span class="text-xs text-slate-500">Administrador</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <!-- Main Content -->
+    <main class="flex-1 lg:ml-64 flex flex-col w-full">
+      <!-- Header -->
+      <header
+        class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 md:px-8 sticky top-0 z-10"
+      >
+        <div class="flex items-center gap-3">
+          <button id="mobile-menu-btn" class="lg:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+            <span class="material-icons-outlined">menu</span>
+          </button>
+          <h1 id="page-title" class="text-lg md:text-xl font-semibold">ALARMAS REGISTRADAS</h1>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4">
+          <button
+            class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+          >
+            <span class="material-icons-outlined">notifications</span>
+          </button>
+          <button
+            id="btn-nueva-alarma"
+            class="bg-primary hover:bg-blue-700 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-1 md:gap-2 font-medium transition-all shadow-sm text-sm md:text-base"
+          >
+            <span class="material-icons-outlined text-sm">add</span>
+            <span class="hidden sm:inline">Crear Nueva</span>
+            <span class="hidden md:inline">Alarma</span>
+          </button>
+        </div>
+      </header>
+      <section id="view-alarms" data-view="alarms">
+      <!-- Page Content -->
+      <div class="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 max-w-7xl mx-auto w-full">
+        <!-- Fila de Métricas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <div
+            class="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3 md:gap-4"
+          >
+            <div
+              class="w-10 h-10 md:w-12 md:h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg flex items-center justify-center flex-shrink-0"
+            >
+              <span class="material-icons-outlined text-xl md:text-2xl">check_circle</span>
+            </div>
+            <div>
+              <p class="text-xs md:text-sm font-medium text-slate-500">Alarmas Activas</p>
+              <h3 class="text-xl md:text-2xl font-bold">128</h3>
+            </div>
+          </div>
+          <div
+            class="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3 md:gap-4"
+          >
+            <div
+              class="w-10 h-10 md:w-12 md:h-12 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center flex-shrink-0"
+            >
+              <span class="material-icons-outlined text-xl md:text-2xl">wifi_off</span>
+            </div>
+            <div>
+              <p class="text-xs md:text-sm font-medium text-slate-500">
+                Computadoras Fuera de Línea
+              </p>
+              <h3 class="text-xl md:text-2xl font-bold">3</h3>
+            </div>
+          </div>
+          <div
+            class="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3 md:gap-4 sm:col-span-2 lg:col-span-1"
+          >
+            <div
+              class="w-10 h-10 md:w-12 md:h-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center flex-shrink-0"
+            >
+              <span class="material-icons-outlined text-xl md:text-2xl">event</span>
+            </div>
+            <div>
+              <p class="text-xs md:text-sm font-medium text-slate-500">Programadas Hoy</p>
+              <h3 class="text-xl md:text-2xl font-bold">42</h3>
+            </div>
+          </div>
+        </div>
+        <!-- Contenedor Principal de la Tabla de Datos -->
+        <div
+          class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
+        >
+          <div
+            class="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4"
+          >
+            <div class="relative w-full sm:w-64">
+              <span
+                class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"
+                >search</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary/20 transition-all"
+                placeholder="Buscar alarmas..."
+                type="text"
+              />
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                class="flex-1 sm:flex-none px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+              >
+                <span class="material-icons-outlined text-sm">filter_list</span>
+                Filtrar
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto -mx-4 md:mx-0">
+
+
+            <!---TABLA DE ALARMAS   -->
+            <table class="w-full text-left min-w-[640px]">
+              <thead>
+                <tr class="bg-slate-50/50 dark:bg-slate-800/50">
+                  <th
+                    class="px-4 md:px-6 py-3 md:py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Nombre de Alarma
+                  </th>
+                  <th
+                    class="px-4 md:px-6 py-3 md:py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Computadora Asignada
+                  </th>
+                  <th
+                    class="px-4 md:px-6 py-3 md:py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Frecuencia
+                  </th>
+                  <th
+                    class="px-4 md:px-6 py-3 md:py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Hora
+                  </th>
+                  <th
+                    class="px-4 md:px-6 py-3 md:py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Estado
+                  </th>
+                  <th
+                    class="px-4 md:px-6 py-3 md:py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right"
+                  >
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="alarm-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <!-- EMPIEZAN ELEMENTOS DE ALARMAS -->
+              </tbody>
+
+
+
+
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div
+            class="px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3"
+          >
+                <span id="pagination-info" class="text-xs text-slate-500 font-medium text-center sm:text-left"
+                  >Mostrando 0 de 0 alarmas</span
+                >
+            <div class="flex gap-2">
+              <button
+                id="prev-page-btn"
+                class="p-1 border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+              >
+                <span class="material-icons-outlined text-sm leading-none"
+                  >chevron_left</span
+                >
+              </button>
+              <button
+                id="next-page-btn"
+                class="p-1 border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span class="material-icons-outlined text-sm leading-none"
+                  >chevron_right</span
+                >
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </section>
+
+      
+
+      <!-- SECCION DE REGISTROS -->
+      <section id="view-registros" data-view="registros" class="hidden">
+        <div class="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+          <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div class="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
+              <div>
+                <h2 class="text-lg font-semibold">Equipos registrados</h2>
+                <p class="text-xs md:text-sm text-slate-500">Estado, hostname e IP de cada equipo</p>
+              </div>
+              <div class="relative w-full sm:w-64">
+                <span class="material-icons-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                <input
+                  class="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary/20 transition-all"
+                  placeholder="Buscar equipo..."
+                  type="text"
+                />
+              </div>
+            </div>
+
+            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+              <div class="px-4 md:px-6 py-4 md:py-5 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-11 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+                    <span class="material-icons-outlined">computer</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm md:text-base font-semibold">PC-URGENCIAS-01</span>
+                      <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                        En linea
+                      </span>
+                    </div>
+                    <p class="text-xs text-slate-500">Hostname: urgencias-01</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-slate-400">IP</p>
+                  <p class="text-sm font-medium">192.168.1.24</p>
+                </div>
+              </div>
+
+              <div class="px-4 md:px-6 py-4 md:py-5 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-11 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+                    <span class="material-icons-outlined">computer</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm md:text-base font-semibold">PC-URGENCIAS-02</span>
+                      <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        Intermitente
+                      </span>
+                    </div>
+                    <p class="text-xs text-slate-500">Hostname: urgencias-02</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-slate-400">IP</p>
+                  <p class="text-sm font-medium">192.168.1.25</p>
+                </div>
+              </div>
+
+              <div class="px-4 md:px-6 py-4 md:py-5 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-11 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+                    <span class="material-icons-outlined">computer</span>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm md:text-base font-semibold">PC-URGENCIAS-03</span>
+                      <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                        Fuera de linea
+                      </span>
+                    </div>
+                    <p class="text-xs text-slate-500">Hostname: urgencias-03</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-xs text-slate-400">IP</p>
+                  <p class="text-sm font-medium">192.168.1.26</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!--TERMINA SECCION DE REGISTROS-->
+
+
+    </main>
+
+
+
+<!--EMPIEZA CODIGO DEL MODAL-->
+  <div id="modal-alarm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" style="display: none;">
+    <div class="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+  <!-- Header -->
+  <div class="px-4 md:px-8 py-4 md:py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start md:items-center gap-3">
+    <div class="flex-1">
+      <h1 id="modal-title" class="text-lg md:text-xl font-semibold text-slate-800 dark:text-white">
+        Crear nueva alarma
+      </h1>
+      <p id="modal-subtitle" class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+        Configura los parámetros de la nueva alarma para las estaciones de trabajo.
+      </p>
+    </div>
+    <button id="close-modal-alarm" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors flex-shrink-0">
+      <span class="material-icons-round">X</span>
+    </button>
+  </div>
+
+  <form id="alarm-form" action="#" method="POST">
+    <div class="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8">
+
+      <!-- Basic Info -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Nombre de la alarma
+          </label>
+          <input
+            type="text"
+            class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+            placeholder="Ejemplo: Sincronización semanal"
+            id="alarm-name"
+            required
+            oninvalid="this.setCustomValidity('Por favor, ingresa el nombre de la alarma')"
+            oninput="this.setCustomValidity('')"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Computadora o grupo destino
+          </label>
+          <div class="relative">
+            <select
+              class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none"
+              id="alarm-target"
+              required
+              oninvalid="this.setCustomValidity('Por favor, selecciona un equipo destino')"
+              oninput="this.setCustomValidity('')"
+            >
+            </select>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="space-y-4 md:space-y-6">
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Mensaje de la alarma
+          </label>
+          <textarea
+            rows="3"
+            class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none"
+            placeholder="Mensaje mostrado en la computadora destino" id="alarm-message"
+            required
+            oninvalid="this.setCustomValidity('Por favor, ingresa el mensaje de la alarma')"
+            oninput="this.setCustomValidity('')"></textarea>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Descripción interna
+          </label>
+          <textarea
+            rows="2"
+            class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none"
+            placeholder="Notas para administradores" id="alarm-description"
+            required
+            oninvalid="this.setCustomValidity('Por favor, ingresa la descripción')"
+            oninput="this.setCustomValidity('')"></textarea>
+        </div>
+      </div>
+
+      <!-- Scheduling -->
+      <div class="bg-slate-50 dark:bg-slate-800/50 p-4 md:p-6 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4 md:space-y-6">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Cada cuántas horas se repite
+                  </label>
+                  <input
+                    id="alarm-repeat"
+                    type="number"
+                    min="1"
+                    class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
+                    placeholder="Ejemplo: 1 (cada hora), 2 (cada dos horas)"
+                    required
+                    oninvalid="this.setCustomValidity('Por favor, ingresa la frecuencia de repetición')"
+                    oninput="this.setCustomValidity('')"
+                  />
+                </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-3">
+            Repetir en
+          </label>
+          <div class="flex flex-wrap gap-3">
+            <button type="button" data-day="1" class="day-toggle w-10 h-10 rounded-full bg-primary text-white font-semibold">L</button>
+            <button type="button" data-day="2" class="day-toggle w-10 h-10 rounded-full border text-slate-500">M</button>
+            <button type="button" data-day="3" class="day-toggle w-10 h-10 rounded-full bg-primary text-white font-semibold">M</button>
+            <button type="button" data-day="4" class="day-toggle w-10 h-10 rounded-full border text-slate-500">J</button>
+            <button type="button" data-day="5" class="day-toggle w-10 h-10 rounded-full bg-primary text-white font-semibold">V</button>
+            <button type="button" data-day="6" class="day-toggle w-10 h-10 rounded-full border text-slate-500">S</button>
+            <button type="button" data-day="7" class="day-toggle w-10 h-10 rounded-full border text-slate-500">D</button>
+          </div>
+          <p id="days-error" class="text-xs text-red-600 mt-2 hidden">Debes seleccionar al menos un día</p>
+        </div>
+
+        <div>
+          <label class="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-3">
+            Hora de la alarma
+          </label>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center border rounded-lg px-2 py-1">
+              <input id="alarm-hour" type="number" min="0" max="23" class="w-20 text-center bg-transparent border-none focus:ring-0" placeholder="00" required oninvalid="this.setCustomValidity('Ingresa la hora (0-23)')" oninput="this.setCustomValidity('')">
+              <span>:</span>
+              <input id="alarm-minute" type="number" min="0" max="59" class="w-20 text-center bg-transparent border-none focus:ring-0" placeholder="00" required oninvalid="this.setCustomValidity('Ingresa los minutos (0-59)')" oninput="this.setCustomValidity('')">
+            </div>
+          </div>
+        </div>
+        <!-- Hora de finalización -->
+        <div>
+          <label class="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-3">
+            Hora de finalización
+          </label>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center border rounded-lg px-2 py-1">
+              <input id="alarm-finalhour" type="number" min="0" max="23" class="w-20 text-center bg-transparent border-none focus:ring-0" placeholder="00" required oninvalid="this.setCustomValidity('Ingresa la hora final (0-23)')" oninput="this.setCustomValidity('')">
+              <span>:</span>
+              <input id="alarm-finalminute" type="number" min="0" max="59" class="w-20 text-center bg-transparent border-none focus:ring-0" placeholder="00" required oninvalid="this.setCustomValidity('Ingresa los minutos finales (0-59)')" oninput="this.setCustomValidity('')">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activate Toggle -->
+      <div class="flex items-center justify-between p-4 bg-primary/5 rounded-xl border border-primary/10">
+        <div>
+          <p class="text-sm font-semibold">Activar inmediatamente</p>
+        </div>
+        <input id="alarm-activate" type="checkbox" checked class="toggle">
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-4 md:px-8 py-4 md:py-6 bg-slate-50 dark:bg-slate-800/30 border-t flex justify-end gap-3 md:gap-4">
+      <button type="button" id="cancel-modal-alarm" class="text-sm text-slate-500 px-4 py-2">Cancelar</button>
+      <button type="submit" id="submit-alarm-btn" class="px-6 md:px-8 py-2.5 bg-primary text-white rounded-lg font-semibold text-sm md:text-base">
+        Guardar alarma
+      </button>
+    </div>
+  </form>
+
+    </div>
+  </div>
+  <!--TERMINA CODIGO DEL MODAL-->
+
+  <!-- Contenedor de Notificaciones Toast -->
+  <div id="toast-container" class="fixed top-4 right-4 z-[60] space-y-2 max-w-[calc(100vw-2rem)]"></div>
+
+</body>
+</html>
