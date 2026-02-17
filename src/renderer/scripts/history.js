@@ -118,10 +118,8 @@ async function loadHistory(options = {}) {
     await populateFilterOptions();
     applyFilters();
     if (showNoChanges && !hasChanges) {
-      const resultsText = document.getElementById('history-results-text');
-      if (resultsText) resultsText.textContent = 'Sin cambios nuevos.';
       if (window.showToast) {
-        window.showToast('Sin cambios nuevos.', 'info');
+        window.showToast('Sin cambios nuevos.', 'warning');
       }
     }
 
@@ -309,10 +307,15 @@ function setupTabs() {
 
   function setActive(tab) {
     activeTab = tab;
-    tabAlarm.classList.toggle('bg-primary', tab === 'alarm');
+    tabAlarm.classList.toggle('bg-slate-900', tab === 'alarm');
     tabAlarm.classList.toggle('text-white', tab === 'alarm');
-    tabEquipo.classList.toggle('bg-primary', tab === 'equipo');
+    tabAlarm.classList.toggle('border-slate-900', tab === 'alarm');
+    tabAlarm.classList.toggle('text-slate-600', tab !== 'alarm');
+
+    tabEquipo.classList.toggle('bg-slate-900', tab === 'equipo');
     tabEquipo.classList.toggle('text-white', tab === 'equipo');
+    tabEquipo.classList.toggle('border-slate-900', tab === 'equipo');
+    tabEquipo.classList.toggle('text-slate-600', tab !== 'equipo');
   }
 
   tabAlarm.addEventListener('click', () => {

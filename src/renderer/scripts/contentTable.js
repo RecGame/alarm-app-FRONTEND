@@ -14,6 +14,8 @@ let allAlarmas = []; // Almacenar todas las alarmas
 let filteredAlarmas = []; // Alarmas después de aplicar filtros
 let currentPage = 1; // Página actual
 const itemsPerPage = 12; // Alarmas por página
+let allEquipos = [];
+let equipmentSearchText = '';
 
 // Variables para los filtros activos
 let activeFilters = {
@@ -30,8 +32,20 @@ function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   
-  const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-  const icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+  const bgColor = type === 'success'
+    ? 'bg-green-500'
+    : type === 'error'
+    ? 'bg-red-500'
+    : type === 'warning'
+    ? 'bg-yellow-500'
+    : 'bg-blue-500';
+  const icon = type === 'success'
+    ? 'check_circle'
+    : type === 'error'
+    ? 'error'
+    : type === 'warning'
+    ? 'warning'
+    : 'info';
   
   toast.className = `${bgColor} text-white px-4 md:px-6 py-3 md:py-4 rounded-lg shadow-lg flex items-center gap-2 md:gap-3 min-w-[280px] md:min-w-[300px] animate-slide-in`;
   toast.innerHTML = `
@@ -49,6 +63,9 @@ function showToast(message, type = 'success') {
     }, 300);
   }, 3000);
 }
+
+// Exponer para otros módulos
+window.showToast = showToast;
 
 ////////////////////////////////////////////// EMPIEZA SECCION DE FILTROS///////////////////////////////////////////////////////////////
 
@@ -217,76 +234,94 @@ async function loadDashboardStats() {
   }
 }
 
+//FUNCION PARA RENDERIZAR EQUIPOS REGISTRADOS
+function renderEquipmentList(equipos) {
+  const container = document.getElementById('equipment-list');
+  if (!container) return;
+
+  if (equipos.length === 0) {
+    const isSearching = equipmentSearchText.length > 0;
+    container.innerHTML = `
+      <div class="px-4 md:px-6 py-8 text-center text-slate-500">
+        <span class="material-icons-outlined text-4xl mb-2">${isSearching ? 'search_off' : 'computer_off'}</span>
+        <p>${isSearching ? 'No se encontraron equipos' : 'No hay equipos registrados'}</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = equipos.map(equipo => {
+    // Formatear fecha de última conexión
+    let ultimaConexion = '';
+    if (equipo.Ultimo_Registro) {
+      const fechaStr = equipo.Ultimo_Registro.replace(' ', 'T');
+      const fecha = new Date(fechaStr);
+      const dia = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const hora = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+      ultimaConexion = `${dia} a las ${hora}`;
+    }
+    
+    // Formatear fecha de registro
+    let fechaRegistro = '';
+    if (equipo.Fecha_Registro) {
+      const fechaStr = equipo.Fecha_Registro.replace(' ', 'T');
+      const fecha = new Date(fechaStr);
+      fechaRegistro = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    
+    return `
+      <div class="px-4 md:px-6 py-4 md:py-5 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-11 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
+            <span class="material-icons-outlined">computer</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm md:text-base font-semibold">${equipo.Nombre_Equipo || 'Sin nombre'}</span>
+              <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                Registrado
+              </span>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              ${equipo.Sistema_Operativo ? `<p class="text-xs text-slate-500">SO: ${equipo.Sistema_Operativo}</p>` : ''}
+              ${ultimaConexion ? `<p class="text-xs text-slate-400">Última conexión: ${ultimaConexion}</p>` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-slate-400">IP</p>
+          <p class="text-sm font-medium">${equipo.IP_Equipo || 'N/A'}</p>
+          ${fechaRegistro ? `<p class="text-xs text-slate-400 mt-1">Registro: ${fechaRegistro}</p>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function applyEquipmentSearch() {
+  const search = equipmentSearchText.trim().toLowerCase();
+  if (!search) {
+    renderEquipmentList(allEquipos);
+    return;
+  }
+
+  const filtered = allEquipos.filter(equipo => {
+    const name = String(equipo.Nombre_Equipo || '').toLowerCase();
+    const ip = String(equipo.IP_Equipo || '').toLowerCase();
+    const system = String(equipo.Sistema_Operativo || '').toLowerCase();
+    return name.includes(search) || ip.includes(search) || system.includes(search);
+  });
+
+  renderEquipmentList(filtered);
+}
+
 //FUNCION PARA CARGAR Y RENDERIZAR EQUIPOS REGISTRADOS
 async function loadRegisteredEquipment() {
   try {
     const equipos = await getRegisteredEquipment();
-    
-    const container = document.getElementById('equipment-list');
-    if (!container) return;
-    
-    if (equipos.length === 0) {
-      container.innerHTML = `
-        <div class="px-4 md:px-6 py-8 text-center text-slate-500">
-          <span class="material-icons-outlined text-4xl mb-2">computer_off</span>
-          <p>No hay equipos registrados</p>
-        </div>
-      `;
-      return;
-    }
-    
-    // Renderizar cada equipo
-    container.innerHTML = equipos.map(equipo => {
-      // Formatear fecha de última conexión
-      let ultimaConexion = '';
-      if (equipo.Ultimo_Registro) {
-        // Agregar 'Z' al final para que JavaScript no aplique conversión de zona horaria
-        const fechaStr = equipo.Ultimo_Registro.replace(' ', 'T');
-        const fecha = new Date(fechaStr);
-        // Ajustar 6 horas (diferencia de zona horaria)
-        fecha.setHours(fecha.getHours() + 6);
-        const dia = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        const hora = fecha.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
-        ultimaConexion = `${dia} a las ${hora}`;
-      }
-      
-      // Formatear fecha de registro
-      let fechaRegistro = '';
-      if (equipo.Fecha_Registro) {
-        const fechaStr = equipo.Fecha_Registro.replace(' ', 'T');
-        const fecha = new Date(fechaStr);
-        fecha.setHours(fecha.getHours() + 6);
-        fechaRegistro = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      }
-      
-      return `
-        <div class="px-4 md:px-6 py-4 md:py-5 flex items-center justify-between gap-4">
-          <div class="flex items-center gap-4">
-            <div class="w-11 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
-              <span class="material-icons-outlined">computer</span>
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="text-sm md:text-base font-semibold">${equipo.Nombre_Equipo || 'Sin nombre'}</span>
-                <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                  <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                  Registrado
-                </span>
-              </div>
-              <div class="flex flex-col gap-0.5">
-                ${equipo.Sistema_Operativo ? `<p class="text-xs text-slate-500">SO: ${equipo.Sistema_Operativo}</p>` : ''}
-                ${ultimaConexion ? `<p class="text-xs text-slate-400">Última conexión: ${ultimaConexion}</p>` : ''}
-              </div>
-            </div>
-          </div>
-          <div class="text-right">
-            <p class="text-xs text-slate-400">IP</p>
-            <p class="text-sm font-medium">${equipo.IP_Equipo || 'N/A'}</p>
-            ${fechaRegistro ? `<p class="text-xs text-slate-400 mt-1">Registro: ${fechaRegistro}</p>` : ''}
-          </div>
-        </div>
-      `;
-    }).join('');
+    allEquipos = Array.isArray(equipos) ? equipos : [];
+    applyEquipmentSearch();
   } catch (error) {
     console.error('Error al cargar equipos registrados:', error);
     const container = document.getElementById('equipment-list');
@@ -513,7 +548,8 @@ document.addEventListener('DOMContentLoaded', async function () {
           document.getElementById('alarm-minute').value = minInicio;
           document.getElementById('alarm-finalhour').value = hourFin;
           document.getElementById('alarm-finalminute').value = minFin;
-          document.getElementById('alarm-repeat').value = alarma.Frecuencia_Minutos || '';
+          const isDailyOnce = alarma.Frecuencia_Minutos === 1440 && horaInicio === horaFin;
+          document.getElementById('alarm-repeat').value = isDailyOnce ? '' : (alarma.Frecuencia_Minutos || '');
           document.getElementById('alarm-activate').checked = alarma.Activa;
 
           // Marcar días seleccionados
@@ -602,7 +638,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     const finalhour = document.getElementById('alarm-finalhour').value;
     const finalminute = document.getElementById('alarm-finalminute').value;
     const activate = document.getElementById('alarm-activate').checked;
-    const repeatTime = document.getElementById('alarm-repeat').value;
+    let repeatTime = document.getElementById('alarm-repeat').value;
     const selectDays = Array.from(document.querySelectorAll('.day-toggle.bg-primary'))
       .map(btn => btn.getAttribute('data-day'));
 
@@ -615,13 +651,19 @@ document.addEventListener('DOMContentLoaded', async function () {
     daysError.classList.add('hidden');
 
     //Construir objeto de alarma para enviar al proceso principal
+    const startTime = `${hour}:${minute}`;
+    const endTime = `${finalhour}:${finalminute}`;
+    if (!repeatTime && startTime === endTime) {
+      repeatTime = '1440';
+    }
+
     const alarmdata = {
       Id_Equipo: target,
       Titulo: name,
       Mensaje: message,
       Descripcion: description,
-      Hora_Inicio: `${hour}:${minute}`,
-      Hora_Fin: `${finalhour}:${finalminute}`,
+      Hora_Inicio: startTime,
+      Hora_Fin: endTime,
       Frecuencia_Minutos: repeatTime,
       Activa: activate,
       Days: selectDays
@@ -797,4 +839,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   // Llenar el select de equipos para el filtro
   await populateEquipmentFilter();
+
+  // Buscador de equipos registrados
+  const equipmentSearchInput = document.getElementById('equipment-search-input');
+  if (equipmentSearchInput) {
+    equipmentSearchInput.addEventListener('input', (e) => {
+      equipmentSearchText = e.target.value;
+      applyEquipmentSearch();
+    });
+  }
 });

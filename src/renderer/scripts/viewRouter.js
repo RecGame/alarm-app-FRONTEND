@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (pageTitle) {
       if (target === "registros") {
-        pageTitle.textContent = "REGISTROS";
+        pageTitle.textContent = "EQUIPOS";
       } else if (target === "historial") {
         pageTitle.textContent = "HISTORIAL";
       } else {
