@@ -19,12 +19,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (pageTitle) {
-      pageTitle.textContent = target === "registros" ? "REGISTROS" : "ALARMAS REGISTRADAS";
+      if (target === "registros") {
+        pageTitle.textContent = "REGISTROS";
+      } else if (target === "historial") {
+        pageTitle.textContent = "HISTORIAL";
+      } else {
+        pageTitle.textContent = "ALARMAS REGISTRADAS";
+      }
     }
     
     // Cargar equipos cuando se cambia a la vista de registros
     if (target === "registros" && window.loadRegisteredEquipment) {
       window.loadRegisteredEquipment();
+    }
+
+    // Cargar historial cuando se cambia a la vista de historial
+    if (target === "historial" && window.loadHistory) {
+      window.loadHistory();
     }
   }
 

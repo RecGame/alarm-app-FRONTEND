@@ -9,6 +9,21 @@
     const cancelBtn = document.getElementById('cancel-modal-alarm');
     const form = document.getElementById('alarm-form');
     
+    function focusAlarmModalInputs() {
+      const notificationsPanel = document.getElementById('notifications-panel');
+      const sidebarOverlay = document.getElementById('sidebar-overlay');
+      const sidebar = document.getElementById('sidebar');
+
+      if (notificationsPanel) notificationsPanel.classList.add('hidden');
+      if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
+      if (sidebar) sidebar.classList.add('-translate-x-full');
+
+      const firstInput = modal ? modal.querySelector('input, textarea, select, button') : null;
+      if (firstInput) firstInput.focus();
+    }
+
+    window.focusAlarmModalInputs = focusAlarmModalInputs;
+
     if (openBtn && modal) {
       openBtn.addEventListener('click', () => {
         // Establecer texto para crear nueva alarma
@@ -27,6 +42,7 @@
         
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        requestAnimationFrame(focusAlarmModalInputs);
       });
     }
     

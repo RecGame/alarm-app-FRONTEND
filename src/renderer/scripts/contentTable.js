@@ -549,6 +549,9 @@ document.addEventListener('DOMContentLoaded', async function () {
           editMode = alertaId;//Guardar ID de la alarma a editar para usarlo al guardar los cambios
           document.getElementById('modal-alarm').style.display = 'flex';//Abrir modal para editar
           document.body.style.overflow = 'hidden';
+          if (window.focusAlarmModalInputs) {
+            window.focusAlarmModalInputs();
+          }
         } catch (error) {
           console.error('Error al cargar alarma para editar:', error);
         }
