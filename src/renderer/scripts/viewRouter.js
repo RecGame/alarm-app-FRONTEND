@@ -1,3 +1,4 @@
+// ESTO HACE EL CAMBIO DE VISTA ENTRE ALARMAS Y REGISTROS, ASÍ COMO LA ACTUALIZACIÓN DEL TÍTULO DE LA PÁGINA
 document.addEventListener("DOMContentLoaded", () => {
   const links = document.querySelectorAll("[data-view-target]");
   const views = document.querySelectorAll("[data-view]");
@@ -19,6 +20,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (pageTitle) {
       pageTitle.textContent = target === "registros" ? "REGISTROS" : "ALARMAS REGISTRADAS";
+    }
+    
+    // Cargar equipos cuando se cambia a la vista de registros
+    if (target === "registros" && window.loadRegisteredEquipment) {
+      window.loadRegisteredEquipment();
     }
   }
 
