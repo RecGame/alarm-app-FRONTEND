@@ -82,6 +82,7 @@
     class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex"
   >
   <!--SCRIPTS-->
+  <script src="http://localhost:8000/socket.io/socket.io.js"></script>
   <script src="scripts/modal.js"></script>
   <script src="scripts/dayToggle.js"></script>
   <script type="module" src="scripts/notifications.js"></script>
@@ -716,6 +717,9 @@
             </div>
           </div>
         </div>
+        <div id="daily-hint" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          Se ejecutara una vez al dia a esa hora, en los dias seleccionados.
+        </div>
       </div>
 
       <!-- Activate Toggle -->
@@ -741,7 +745,7 @@
   <!--TERMINA CODIGO DEL MODAL-->
 
   <!-- Contenedor de Notificaciones Toast -->
-  <div id="toast-container" class="fixed top-4 right-4 z-[60] space-y-2 max-w-[calc(100vw-2rem)]"></div>
+  <div id="toast-container" class="fixed bottom-4 right-4 z-[60] space-y-2 max-w-[calc(100vw-2rem)]"></div>
 
 </body>
 </html>

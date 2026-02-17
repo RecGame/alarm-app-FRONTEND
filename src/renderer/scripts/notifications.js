@@ -9,6 +9,13 @@ import {
 
 let notifications = []; // Array para almacenar notificaciones
 let unreadCount = 0;
+let pollingId = null;
+
+// Iniciar polling para notificaciones cada 10 segundos (fallback si WebSocket no está disponible)
+function startPolling() {
+  if (pollingId) return;
+  pollingId = setInterval(loadNotifications, 10000);
+}
 
 // Tipos de notificaciones con sus íconos y colores
 const notificationTypes = {
@@ -83,13 +90,25 @@ function initNotifications() {
   // Cargar notificaciones existentes
   loadNotifications();
 
-  // Iniciar polling para obtener nuevas notificaciones cada 30 segundos
-  setInterval(loadNotifications, 30000);
-
   // Escuchar notificaciones en tiempo real mediante WebSocket (si está disponible)
   try {
     // Intentar conectar con el servidor WebSocket
+    if (typeof io !== 'function') {
+      throw new Error('Socket.IO client no disponible');
+    }
+
     const socket = io('http://localhost:8000');
+
+    socket.on('connect', () => {
+      if (pollingId) {
+        clearInterval(pollingId);
+        pollingId = null;
+      }
+    });
+
+    socket.on('connect_error', () => {
+      startPolling();
+    });
     
     socket.on('new_notification', (notification) => {
       console.log('Nueva notificación recibida:', notification);
@@ -102,6 +121,7 @@ function initNotifications() {
     });
   } catch (error) {
     console.log('WebSocket no disponible, usando polling');
+    startPolling();
   }
 }
 
@@ -115,47 +135,10 @@ async function loadNotifications() {
     updateBadge();
   } catch (error) {
     console.error('Error al cargar notificaciones:', error);
-    // Generar notificaciones de ejemplo si no hay backend
-    generateMockNotifications();
+    // No generar notificaciones de ejemplo, solo mostrar vacío
+    notifications = [];
+    renderNotifications();
   }
-}
-
-// Generar notificaciones de ejemplo (temporal hasta que el backend esté listo)
-function generateMockNotifications() {
-  const now = new Date();
-  
-  // Limpiar notificaciones anteriores
-  notifications = [];
-
-  // Ejemplo: Alarma próxima
-  addNotification({
-    type: 'alarm_upcoming',
-    title: 'Alarma próxima',
-    message: 'La alarma "Revisar Urgencias" se ejecutará en 15 minutos',
-    timestamp: now.toISOString(),
-    read: false
-  });
-
-  // Ejemplo: Equipo desconectado
-  addNotification({
-    type: 'equipment_offline',
-    title: 'Equipo desconectado',
-    message: 'PC-URGENCIAS-01 no responde desde hace 10 minutos',
-    timestamp: new Date(now - 15 * 60000).toISOString(),
-    read: false
-  });
-
-  // Ejemplo: Log de actividad
-  addNotification({
-    type: 'activity_log',
-    title: 'Alarma creada',
-    message: 'Nueva alarma "Control de Turnos" creada',
-    timestamp: new Date(now - 30 * 60000).toISOString(),
-    read: true
-  });
-
-  renderNotifications();
-  updateBadge();
 }
 
 // Agregar una nueva notificación

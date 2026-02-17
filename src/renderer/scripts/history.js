@@ -226,9 +226,12 @@ function renderHistoryTable(rows) {
       }
       const item = grouped.get(key);
       item.alarms.add(row.Id_Alerta);
+      const hasReceived = row.Estado === 'recibido' || row.Estado === 'visto' || Boolean(row.Fecha_Recibida);
+      const hasSeen = row.Estado === 'visto' || Boolean(row.Fecha_Vista);
+
       if (row.Estado === 'enviado') item.sent += 1;
-      if (row.Estado === 'recibido') item.received += 1;
-      if (row.Estado === 'visto') item.seen += 1;
+      if (hasReceived) item.received += 1;
+      if (hasSeen) item.seen += 1;
 
       const activityDate = new Date(row.Fecha_Mostrada);
       if (!Number.isNaN(activityDate.getTime())) {

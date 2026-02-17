@@ -4,7 +4,7 @@ import { getTargets } from "./api/TargetApi.js";//IMPORTAR FUNCION PARA OBTENER 
 import { getAlarms } from "./api/getAlarms.js";//IMPORTAR FUNCION PARA OBTENER LAS ALARMAS DE LA BASE DE DATOS
 import { logAlarmActivity } from "./api/notificationApi.js";//IMPORTAR FUNCION PARA REGISTRAR ACTIVIDAD DE ALARMAS
 import { getDashboardStats } from "./api/statsApi.js";//IMPORTAR FUNCION PARA OBTENER ESTADÍSTICAS DEL DASHBOARD
-import { getRegisteredEquipment } from "./api/equipmentApi.js";//IMPORTAR FUNCION PARA OBTENER EQUIPOS REGISTRADOS
+import { getRegisteredEquipment, deleteEquipment } from "./api/equipmentApi.js";//IMPORTAR FUNCIONES PARA OBTENER Y ELIMINAR EQUIPOS REGISTRADOS
 
 
 const alarmas = [];//ARREGLO PARA GUARDAR LAS ALARMAS
@@ -66,6 +66,69 @@ function showToast(message, type = 'success') {
 
 // Exponer para otros módulos
 window.showToast = showToast;
+
+// Variable global para mantener la conexión con el backend
+let backendSocket = null;
+
+// Función para mostrar notificación de conexión con el backend
+function checkBackendConnection() {
+  try {
+    if (typeof io !== 'function') {
+      console.warn('Socket.IO no disponible');
+      return;
+    }
+    
+    // Si ya hay un socket, desconectarlo primero
+    if (backendSocket) {
+      backendSocket.disconnect();
+    }
+    
+    backendSocket = io('http://localhost:8000');
+    
+    backendSocket.on('connect', () => {
+      showToast('Conectado con el servidor', 'success');
+      console.log('✓ Conexión establecida con el backend');
+    });
+    
+    backendSocket.on('disconnect', (reason) => {
+      showToast('Desconectado del servidor', 'warning');
+      console.log('✗ Desconectado del backend. Razón: ' + reason);
+    });
+    
+    backendSocket.on('connect_error', (error) => {
+      console.error('Error de conexion con el backend:', error);
+      showToast('Error al conectar con el servidor', 'error');
+    });
+  } catch (error) {
+    console.error('Error al verificar conexion:', error);
+  }
+}
+
+function updateDailyHint() {
+  const hint = document.getElementById('daily-hint');
+  const repeatInput = document.getElementById('alarm-repeat');
+  const hourInput = document.getElementById('alarm-hour');
+  const minuteInput = document.getElementById('alarm-minute');
+  const finalHourInput = document.getElementById('alarm-finalhour');
+  const finalMinuteInput = document.getElementById('alarm-finalminute');
+
+  if (!hint || !repeatInput || !hourInput || !minuteInput || !finalHourInput || !finalMinuteInput) {
+    return;
+  }
+
+  const startTime = `${hourInput.value}:${minuteInput.value}`;
+  const endTime = `${finalHourInput.value}:${finalMinuteInput.value}`;
+  const hasRepeat = Boolean(repeatInput.value);
+
+  if (startTime === endTime && hourInput.value !== '' && minuteInput.value !== '') {
+    if (hasRepeat) {
+      repeatInput.value = '';
+    }
+    hint.classList.remove('hidden');
+  } else {
+    hint.classList.add('hidden');
+  }
+}
 
 ////////////////////////////////////////////// EMPIEZA SECCION DE FILTROS///////////////////////////////////////////////////////////////
 
@@ -289,10 +352,15 @@ function renderEquipmentList(equipos) {
             </div>
           </div>
         </div>
-        <div class="text-right">
-          <p class="text-xs text-slate-400">IP</p>
-          <p class="text-sm font-medium">${equipo.IP_Equipo || 'N/A'}</p>
-          ${fechaRegistro ? `<p class="text-xs text-slate-400 mt-1">Registro: ${fechaRegistro}</p>` : ''}
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <p class="text-xs text-slate-400">IP</p>
+            <p class="text-sm font-medium">${equipo.IP_Equipo || 'N/A'}</p>
+            ${fechaRegistro ? `<p class="text-xs text-slate-400 mt-1">Registro: ${fechaRegistro}</p>` : ''}
+          </div>
+          <button class="delete-equipment-btn text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors" data-id="${equipo.Id_Equipo}" title="Eliminar equipo">
+            <span class="material-icons-outlined">delete</span>
+          </button>
         </div>
       </div>
     `;
@@ -498,6 +566,10 @@ document.getElementById('alarm-table-body').addEventListener('click', async func
 //CODIGO PARA APARECER EL MODAL Y MANEJAR EL FORMULARIO DE CREACION/EDICION DE ALARMAS
 document.addEventListener('DOMContentLoaded', async function () {
   console.log('DOM completamente cargado y analizado');
+  
+  // Verificar conexión con el backend
+  checkBackendConnection();
+  
   const form = document.querySelector("#alarm-form");
   console.log('Formulario encontrado:', form);
 
@@ -551,6 +623,8 @@ document.addEventListener('DOMContentLoaded', async function () {
           const isDailyOnce = alarma.Frecuencia_Minutos === 1440 && horaInicio === horaFin;
           document.getElementById('alarm-repeat').value = isDailyOnce ? '' : (alarma.Frecuencia_Minutos || '');
           document.getElementById('alarm-activate').checked = alarma.Activa;
+
+          updateDailyHint();
 
           // Marcar días seleccionados
           document.querySelectorAll('.day-toggle').forEach(btn => {
@@ -653,7 +727,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     //Construir objeto de alarma para enviar al proceso principal
     const startTime = `${hour}:${minute}`;
     const endTime = `${finalhour}:${finalminute}`;
-    if (!repeatTime && startTime === endTime) {
+    if (startTime === endTime) {
       repeatTime = '1440';
     }
 
@@ -848,4 +922,46 @@ document.addEventListener('DOMContentLoaded', async function () {
       applyEquipmentSearch();
     });
   }
+
+  // Event listener para eliminar equipos
+  const equipmentList = document.getElementById('equipment-list');
+  if (equipmentList) {
+    equipmentList.addEventListener('click', async (e) => {
+      if (e.target.closest('.delete-equipment-btn')) {
+        const btn = e.target.closest('.delete-equipment-btn');
+        const id = btn.getAttribute('data-id');
+        const equipmentName = btn.closest('.px-4').querySelector('span.text-sm.md\\:text-base.font-semibold')?.textContent || 'Equipo';
+        
+        const confirmDelete = confirm(`¿Estás seguro de que deseas eliminar "${equipmentName}"? Esta acción no se puede deshacer.`);
+        if (confirmDelete) {
+          try {
+            await deleteEquipment(id);
+            console.log('Equipo eliminado');
+            showToast('Equipo eliminado con éxito', 'success');
+            await loadRegisteredEquipment();
+            await populateEquipmentFilter();
+          } catch (error) {
+            console.error('Error al eliminar equipo:', error);
+            showToast('Error al eliminar el equipo', 'error');
+          }
+        }
+      }
+    });
+  }
+
+  // Aviso de ejecucion diaria
+  const repeatInput = document.getElementById('alarm-repeat');
+  const hourInput = document.getElementById('alarm-hour');
+  const minuteInput = document.getElementById('alarm-minute');
+  const finalHourInput = document.getElementById('alarm-finalhour');
+  const finalMinuteInput = document.getElementById('alarm-finalminute');
+
+  [repeatInput, hourInput, minuteInput, finalHourInput, finalMinuteInput]
+    .filter(Boolean)
+    .forEach((input) => {
+      input.addEventListener('input', updateDailyHint);
+      input.addEventListener('change', updateDailyHint);
+    });
+
+  updateDailyHint();
 });
