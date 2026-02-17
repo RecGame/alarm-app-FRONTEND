@@ -5,6 +5,7 @@ import { getAlarms } from './api/getAlarms.js';
 let historyRows = [];
 let activeTab = 'alarm';
 let hasPendingUpdate = false;
+let lastSignature = '';
 
 const state = {
   alarmId: 'all',
@@ -90,15 +91,48 @@ function applyFilters() {
   renderHistoryTable(filtered);
 }
 
-async function loadHistory() {
+function computeSignature(rows) {
+  if (!rows.length) return 'empty';
+  const first = rows[0];
+  const last = rows[rows.length - 1];
+  return `${rows.length}-${first.Id_Historial || ''}-${first.Fecha_Mostrada || ''}-${last.Id_Historial || ''}`;
+}
+
+function setRefreshLoading(isLoading) {
+  const refreshBtn = document.getElementById('history-refresh-btn');
+  const spinner = document.getElementById('history-refresh-spinner');
+  if (spinner) spinner.classList.toggle('hidden', !isLoading);
+  if (refreshBtn) refreshBtn.disabled = isLoading;
+}
+
+async function loadHistory(options = {}) {
+  const { showNoChanges } = options;
+  setRefreshLoading(true);
   try {
-    historyRows = await getAlarmHistory({ limit: 500 });
+    const rows = await getAlarmHistory({ limit: 500 });
+    const signature = computeSignature(rows);
+    const hasChanges = signature !== lastSignature;
+    lastSignature = signature;
+    historyRows = rows;
     hasPendingUpdate = false;
     await populateFilterOptions();
     applyFilters();
+    if (showNoChanges && !hasChanges) {
+      const resultsText = document.getElementById('history-results-text');
+      if (resultsText) resultsText.textContent = 'Sin cambios nuevos.';
+      if (window.showToast) {
+        window.showToast('Sin cambios nuevos.', 'info');
+      }
+    }
+
+    if (showNoChanges && hasChanges && window.showToast && isHistoryVisible()) {
+      window.showToast('Historial actualizado.', 'success');
+    }
   } catch (error) {
     console.error('Error al cargar historial:', error);
     renderHistoryTable([]);
+  } finally {
+    setRefreshLoading(false);
   }
 }
 
@@ -298,7 +332,7 @@ function setupRefresh() {
   const refreshBtn = document.getElementById('history-refresh-btn');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => {
-      loadHistory();
+      loadHistory({ showNoChanges: true });
     });
   }
 }

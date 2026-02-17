@@ -492,8 +492,9 @@
                 <p class="text-xs md:text-sm text-slate-500">Enviadas, recibidas y vistas</p>
               </div>
               <div class="flex items-center gap-2">
-                <button id="history-refresh-btn" class="px-3 py-1.5 text-xs font-semibold rounded-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
-                  Actualizar
+                <button id="history-refresh-btn" class="px-3 py-1.5 text-xs font-semibold rounded-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2">
+                  <span id="history-refresh-spinner" class="hidden inline-block w-3 h-3 border-2 border-slate-300 border-t-transparent rounded-full animate-spin"></span>
+                  <span>Actualizar</span>
                 </button>
                 <button id="history-tab-alarm" class="px-3 py-1.5 text-xs font-semibold rounded-full border border-slate-200 dark:border-slate-700">Por alarma</button>
                 <button id="history-tab-equipo" class="px-3 py-1.5 text-xs font-semibold rounded-full border border-slate-200 dark:border-slate-700">Por equipo</button>
