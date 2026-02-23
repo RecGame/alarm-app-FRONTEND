@@ -305,8 +305,8 @@ function renderEquipmentList(equipos) {
   if (equipos.length === 0) {
     const isSearching = equipmentSearchText.length > 0;
     container.innerHTML = `
-      <div class="px-4 md:px-6 py-8 text-center text-slate-500">
-        <span class="material-icons-outlined text-4xl mb-2">${isSearching ? 'search_off' : 'computer_off'}</span>
+      <div class="px-4 md:px-6 py-8 text-center text-slate-500 flex flex-col items-center">
+        <span class="material-icons-outlined text-4xl mb-2 leading-none block mx-auto">${isSearching ? 'search_off' : 'computer_off'}</span>
         <p>${isSearching ? 'No se encontraron equipos' : 'No hay equipos registrados'}</p>
       </div>
     `;
